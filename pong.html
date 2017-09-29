@@ -1,0 +1,276 @@
+<html>
+    <body>
+        <style>
+            body{
+                background-color: #E3C2F7;
+            }
+
+            #myCanvas{
+                background-color: #A58EAF; 
+            }
+
+            #canvasWrapper{
+                text-align: center;
+                padding-top: 90px;
+            }
+
+        </style>
+        <div id = "canvasWrapper">
+            <canvas id="myCanvas" width="1000px" height="500px"></canvas>
+        </div>
+
+        <script>
+            //Code goes here
+            var canvas = document.getElementById("myCanvas");
+            var context = canvas.getContext("2d");
+           // Paddle variables
+            var playerOneY = 150;
+            var playerOneX = 100;
+            var playerTwoX = 880;
+            var playerTwoY = 150;
+            var paddleHeight = 90;
+            var paddleWidth = 20;
+            var paddleDeltaY = 8;
+            var paddleColor = "#5fe0ca";
+            // Ball variables
+            var ballX = 500;
+            var ballY = 250;
+            var ballRadius = 10;
+            var ballVelX = -6.5;
+            var ballVelY = 0;
+            var maxBallVelY = 6;
+            var ballColor = "#9a1644";
+            // Key press variables
+            var playerOneUpKey = false;
+            var playerOneDownKey = false;
+            var playerOneLastKey;
+            var playerTwoUpKey = false;
+            var playerTwoDownKey = false;
+            var playerTwoLastKey;
+
+            var UP_ARROW_KEY = 38;
+            var DOWN_ARROW_KEY = 40;
+            var W_KEY = 87;
+            var S_KEY = 83;
+
+            var fontSize = 30;
+            var font = fontSize + "px Arial";
+            var playerOneScore = 0;
+            var playerTwoScore = 0;
+            var scorePadding = 20;
+            var scorePoints = 1000;
+
+            var canvasWidth = 1000;
+            var canvasHeight = 500;
+
+            context.font = font;
+            var charWidth = context.measureText("0").width;
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            setInterval(update, 10);
+            setInterval(draw, 10);
+
+            document.addEventListener('keydown', function(event) {
+                // this is up arrow
+                if(event.keyCode == W_KEY) {
+                    playerOneUpKey = true;
+                    playerOneLastKey = "up";
+                }
+                // this is down arrow
+                else if(event.keyCode == S_KEY) {
+                    playerOneDownKey = true;
+                    playerOneLastKey = "down";
+                }
+
+                // this is up W
+                if(event.keyCode == UP_ARROW_KEY) {
+                    playerTwoUpKey = true;
+                    playerTwoLastKey = "up";
+                }
+                // this is S
+                else if(event.keyCode == DOWN_ARROW_KEY) {
+                    playerTwoDownKey = true;
+                    playerTwoLastKey = "down";
+                }
+            });
+
+            document.addEventListener('keyup', function(event) {
+                // this is up arrow
+                if(event.keyCode == W_KEY) {
+                    playerOneUpKey = false;
+                    if(playerOneDownKey == true){
+                        playerOneLastKey = "down";
+                    }else{
+                        playerOneLastKey = undefined;
+                    }
+                }
+                // this is down arrow
+                else if(event.keyCode == S_KEY) {
+                    playerOneDownKey = false;
+                    if(playerOneUpKey == true){
+                        playerOneLastKey = "up";
+                    }else{
+                        playerOneLastKey = undefined;
+                    }
+                }
+
+                 // this is W
+                if(event.keyCode == UP_ARROW_KEY) {
+                    playerTwoUpKey = false;
+                    if(playerTwoDownKey == true){
+                        playerTwoLastKey = "down";
+                    }else{
+                        playerTwoLastKey = undefined;
+                    }
+                }
+                // this is S
+                else if(event.keyCode == DOWN_ARROW_KEY) {
+                    playerTwoDownKey = false;
+                    if(playerTwoUpKey == true){
+                        playerTwoLastKey = "up";
+                    }else{
+                        playerTwoLastKey = undefined;
+                    }
+                }
+            });
+
+            function update(){
+                // player 1
+                if(playerOneLastKey == "up"){
+                    playerOneY = playerOneY-paddleDeltaY;
+                    if(playerOneY < 0){
+                        playerOneY = 0;
+                    }
+                }else if(playerOneLastKey == "down"){
+                    playerOneY = playerOneY+paddleDeltaY;
+                    if(playerOneY + paddleHeight > canvasHeight){
+                        playerOneY = canvasHeight - paddleHeight;
+                    }
+                }
+
+                // player 2
+                if(playerTwoLastKey == "up"){
+                    playerTwoY = playerTwoY-paddleDeltaY;
+                    if(playerTwoY < 0){
+                        playerTwoY = 0;
+                    }
+                }else if(playerTwoLastKey == "down"){
+                    playerTwoY = playerTwoY+paddleDeltaY;
+                    if(playerTwoY + paddleHeight > canvasHeight){
+                        playerTwoY = canvasHeight - paddleHeight;
+                    }
+                }
+
+                ballX = ballX + ballVelX;
+                ballY = ballY + ballVelY;
+                
+                var playerOneCollideX = playerOneX+paddleWidth;
+                var playerTwoCollideX = playerTwoX;
+                var ballTop = ballY - ballRadius;
+                var ballBottom = ballY + ballRadius;
+                var ballLeft = ballX - ballRadius;
+                var ballRight = ballX + ballRadius;
+
+                // check if the ball is at/beyond the paddle edge
+                if(ballLeft<=playerOneCollideX && ballLeft>playerOneX){
+                    var paddleTop = playerOneY;
+                    var paddleBottom = playerOneY + paddleHeight;
+                    var collide = true;
+                    // if the ball is completely above the paddle
+                    if(ballTop<paddleTop && ballBottom<paddleTop){
+                        collide = false;
+                    }
+                    
+                    // if the ball is completely below the paddle
+                    if(ballTop>paddleBottom && ballBottom>paddleBottom){
+                        collide = false;
+                    }
+
+                    // if the ball collided with the paddle, make it go in the opposite direction
+                    if(collide==true){
+                        var middleOfPaddle = playerOneY + paddleHeight/2;
+                        // difference in height between ball and paddle, if negative the ball is higher by that amount, if positive ball is lower by that amount
+                        var diff = ballY - middleOfPaddle; 
+                        var maxDiff = 0.5 * paddleHeight;
+                        ballVelY = (diff/maxDiff) * maxBallVelY;
+                        ballX += playerOneCollideX - ballLeft;
+                        ballVelX = -ballVelX;
+                    }
+                }
+
+                 // check if the ball is at/beyond the paddle edge
+                if(ballRight>=playerTwoCollideX && ballRight<playerTwoCollideX + paddleWidth){
+                    var paddleTop = playerTwoY;
+                    var paddleBottom = playerTwoY + paddleHeight;
+                    var collide = true;
+                    // if the ball is completely above the paddle
+                    if(ballTop<paddleTop && ballBottom<paddleTop){
+                        collide = false;
+                    }
+                    
+                    // if the ball is completely below the paddle
+                    if(ballTop>paddleBottom && ballBottom>paddleBottom){
+                        collide = false;
+                    }
+
+                    // if the ball collided with the paddle, make it go in the opposite direction
+                    if(collide==true){
+                        var middleOfPaddle = playerTwoY + paddleHeight/2;
+                        // difference in height between ball and paddle, if negative the ball is higher by that amount, if positive ball is lower by that amount
+                        var diff = ballY - middleOfPaddle; 
+                        var maxDiff = 0.5 * paddleHeight;
+                        ballVelY = (diff/maxDiff) * maxBallVelY;
+                        ballX -= ballRight - playerTwoCollideX;
+                        ballVelX = -ballVelX;
+                    }
+                }
+
+
+                // if it hits the ceiling/floor flip the Y direction
+                if(ballTop <= 0 || ballBottom >= canvasHeight){
+                    ballVelY = -ballVelY;
+                }
+
+                // if it hits either wall, flip the X direction
+                if(ballLeft <= 0){
+                    playerTwoScore+=scorePoints;
+                    ballVelX = -ballVelX;
+                }else if(ballRight >= canvasWidth){
+                    playerOneScore+=scorePoints;
+                    ballVelX = -ballVelX;
+                }
+            }
+
+            function draw(){
+                 // fillRect(x, y, width, height); All of the arguments have to be numbers
+                context.clearRect(0, 0, canvasWidth, canvasHeight);
+                // draw a ball
+                context.beginPath();
+                context.arc(ballX, ballY, ballRadius, 0, 2 * Math.PI);
+                context.fillStyle = ballColor;
+                context.fill();
+                // draw a rectangle in the center for visual purposes
+                //context.fillRect(495,50,10,50);
+                // draw a paddle
+                context.fillStyle = paddleColor;
+                context.fillRect(playerOneX, playerOneY, paddleWidth, paddleHeight);
+                context.fillRect(playerTwoX, playerTwoY, paddleWidth, paddleHeight);
+                // Draw score
+                var numOfLetters = ("" + playerOneScore).length;
+                var xP1 = 500 - scorePadding - charWidth * numOfLetters;
+                var xP2 = 500 + scorePadding / 2;
+                console.log("xP1: " + xP1);
+                console.log("xP2: " + xP2);
+
+                context.fillStyle = 'white';
+                context.font = font;
+                context.fillText(playerOneScore, xP1 , 50);
+                context.fillText(":", 500 - charWidth / 2 , 50);
+                context.fillText(playerTwoScore, xP2, 50);
+            }
+        
+        </script>
+    </body>
+</html>
